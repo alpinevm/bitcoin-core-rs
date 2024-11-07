@@ -89,12 +89,12 @@ if [ "$CORE_VENDOR_CP_NOT_CLONE" == "yes" ]; then
     cp -r "$CORE_VENDOR_REPO" "$DIR"
     chmod -R +w "$DIR"
 else
-    git clone "$CORE_VENDOR_REPO" "$DIR"
+    # Use shallow clone with specific tag instead of full clone
+    git clone --depth 1 --branch "$CORE_REV" "$CORE_VENDOR_REPO" "$DIR"
 fi
 
-# Check out the specified version
+# Remove checkout step since we already have the correct version
 cd "$DIR"
-git checkout "$CORE_REV"
 SOURCE_REV=$(git rev-parse HEAD || echo "[unknown revision from $CORE_VENDOR_REPO]")
 
 # Inject blank configuration file into the correct src/config directory of Bitcoin Core
@@ -111,8 +111,5 @@ EOL
 # Remove .git directory for vendoring
 rm -rf .git/ || true
 
-# Record revision information
-echo "# This file was automatically created by $(basename "$0")" > "$CORE_VENDOR_DEPEND_DIR/bitcoin-HEAD-revision.txt"
-echo "$SOURCE_REV" >> "$CORE_VENDOR_DEPEND_DIR/bitcoin-HEAD-revision.txt"
-
+# Done
 echo "Bitcoin Core vendoring completed successfully in $CORE_VENDOR_DEPEND_DIR."

@@ -1,12 +1,6 @@
 #include "bitcoin_core_wrapper.h"
-#include <cstring>
 #include "vendor/bitcoin/src/crypto/sha256.h"
-#include "vendor/bitcoin/src/primitives/block.h"
-#include "vendor/bitcoin/src/consensus/params.h"
-#include "vendor/bitcoin/src/chainparams.h"
 #include "vendor/bitcoin/src/pow.h"
-#include "vendor/bitcoin/src/core_io.h"
-#include <vector>
 
 extern "C" void sha256_hash(const unsigned char *input, unsigned int input_len, unsigned char output[32])
 {
@@ -15,21 +9,11 @@ extern "C" void sha256_hash(const unsigned char *input, unsigned int input_len, 
     sha256.Finalize(output);
 }
 
-extern "C" bool check_pow(const char *hex_header)
+extern "C" bool check_pow(uint256 hash, unsigned int nBits, uint256 powLimit)
 {
-    if (hex_header == nullptr)
-    {
-        return false; // Invalid input
-    }
-
-    // Deserialize into a CBlockHeader
-    CBlockHeader header;
-    if (!DecodeHexBlockHeader(header, std::string(hex_header)))
-    {
-        return false;
-    }
-
-    // Perform proof-of-work check using `CheckProofOfWork`
-    const Consensus::Params &consensusParams = Params().GetConsensus();
-    return CheckProofOfWork(header.GetHash(), header.nBits, consensusParams);
+    Consensus::Params params;
+    uint16_t sack = 1;
+    params.powLimit = powLimit;
+    bool result = CheckProofOfWork(hash, nBits, params);
+    return result;
 }

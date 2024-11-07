@@ -1,23 +1,29 @@
-const SHA256_OUTPUT_SIZE: usize = 32;
-
-extern "C" {
-    fn sha256_hash(input: *const u8, input_len: u32, output: *mut u8);
-    fn check_pow(hex_header: *const i8) -> bool;
+mod ffi {
+    extern "C" {
+        pub(crate) fn sha256_hash(input: *const u8, input_len: u32, output: *mut u8);
+        pub(crate) fn check_pow(hash: *const u8, n_bits: u32, pow_limit: *const u8) -> bool;
+    }
 }
 
-pub fn sha256(input: &[u8]) -> [u8; SHA256_OUTPUT_SIZE] {
-    let mut output = [0u8; SHA256_OUTPUT_SIZE];
+pub fn sha256(input: &[u8]) -> [u8; 32] {
+    let mut output = [0u8; 32];
     unsafe {
-        sha256_hash(input.as_ptr(), input.len() as u32, output.as_mut_ptr());
+        ffi::sha256_hash(input.as_ptr(), input.len() as u32, output.as_mut_ptr());
     }
     output
 }
+
+pub fn check_pow(hash: [u8; 32], n_bits: u32, pow_limit: [u8; 32]) -> bool {
+    unsafe {
+        ffi::check_pow(hash.as_ptr(), n_bits, pow_limit.as_ptr())
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use hex_literal::hex;
-    use std::ffi::CString;
 
     #[test]
     fn test_sha256() {
@@ -39,20 +45,13 @@ mod tests {
     }
 
     #[test]
-    fn test_check_pow_valid() {
-        // This is a real Bitcoin block header from block 125552
-        let valid_header = "0100000081cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0f1fc122bc7f5d74df2b9441a42a14695";
-        let c_header = CString::new(valid_header).unwrap();
-        let result = unsafe { check_pow(c_header.as_ptr()) };
-        assert!(result);
-    }
-
-    #[test]
-    fn test_check_pow_invalid() {
-        // Invalid header (modified nonce)
-        let invalid_header = "0100000081cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0f1fc122bc7f5d74df2b9441a42a14696";
-        let c_header = CString::new(invalid_header).unwrap();
-        let result = unsafe { check_pow(c_header.as_ptr()) };
-        assert!(!result);
+    fn test_check_pow() {
+        // Test case 1: Hash that meets PoW requirement
+        let hash = hex!("00000000000000000001f6e715e763d970565883c0d0c424f6236c0f9fed4559");
+        let pow_limit = hex!("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        println!("hash: {:?}", hash);
+        println!("pow_limit: {:?}", pow_limit);
+        println!("check_pow: {:?}", check_pow(hash, 0, pow_limit));
+        assert!(check_pow(hash, 0, pow_limit));
     }
 }

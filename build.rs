@@ -33,32 +33,26 @@ fn main() {
             .flag("-fdata-sections")
             .flag("-ffunction-sections")
             .flag("-flto")
-            .flag("-fno-exceptions")
             .flag("-fno-rtti")
             .flag("-fno-threadsafe-statics")
             .target("riscv32im-unknown-none-elf");
     }
 
     base_config
-        .flag("-std=c++17")
+        .flag("-std=c++20")
         .flag("-Wno-unused-parameter")
         .flag("-Wno-unused-variable")
         .include("src/native/vendor/bitcoin/src")
-        .include("src/native/vendor/bitcoin/src/support")
-        .include("src/native/vendor/bitcoin/src/util")
-        .file("src/native/vendor/bitcoin/src/arith_uint256.cpp")
-        .file("src/native/vendor/bitcoin/src/uint256.cpp")
-        .file("src/native/vendor/bitcoin/src/util/strencodings.cpp")
-        .file("src/native/vendor/bitcoin/src/support/cleanse.cpp")
         .file("src/native/vendor/bitcoin/src/crypto/sha256.cpp")
-        .file("src/native/vendor/bitcoin/src/primitives/block.cpp")
-        .file("src/native/vendor/bitcoin/src/chainparams.cpp")
-        .file("src/native/vendor/bitcoin/src/chainparamsbase.cpp")
         .file("src/native/vendor/bitcoin/src/pow.cpp")
-        .file("src/native/vendor/bitcoin/src/core_read.cpp")
+        .file("src/native/vendor/bitcoin/src/uint256.cpp")
+        .file("src/native/vendor/bitcoin/src/arith_uint256.cpp")
         .file("src/native/bitcoin_core_wrapper.cpp")
         .compile("bitcoin_core_lib.a");
 
+    if env::var("CARGO_CFG_TARGET_ARCH").unwrap() != "riscv32" {
+        println!("cargo:rustc-link-lib=stdc++");
+    }
     println!("cargo:rerun-if-changed=src/lib.rs");
     println!("cargo:rerun-if-changed=src/native/bitcoin_core_wrapper.cpp");
     println!("cargo:rerun-if-changed=src/native/bitcoin_core_wrapper.h");
