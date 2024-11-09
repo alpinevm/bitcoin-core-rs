@@ -5,40 +5,19 @@ edition = "2021"
 description = "Bitcoin Core src/consensus Rust bindings."
 keywords = [ "bitcoin", "bitcoinconsensus" ]
 readme = "README.md"
-exclude = [
-        "/vendor/bitcoin/.github/**",
-        "/vendor/bitcoin/.tx/**",
-        "/vendor/bitcoin/build-aux/**",
-        "/vendor/bitcoin/contrib/**",
-        "/vendor/bitcoin/depends/**",
-        "/vendor/bitcoin/doc/**",
-        "/vendor/bitcoin/share/**",
-        "/vendor/bitcoin/test/**",
-        "/vendor/bitcoin/src/bench/**",
-        "/vendor/bitcoin/src/config/**",
-        "/vendor/bitcoin/src/leveldb/**",
-        "/vendor/bitcoin/src/policy/**",
-        "/vendor/bitcoin/src/qt/**",
-        "/vendor/bitcoin/src/rpc/**",
-        "/vendor/bitcoin/src/support/**",
-        "/vendor/bitcoin/src/test/**",
-        "/vendor/bitcoin/src/univalue/**",
-        "/vendor/bitcoin/src/wallet/**",
-        "/vendor/bitcoin/src/zmq/**"
-        ]
+# TODO: update this to actually exclude 
+exclude = []
 build = "build.rs"
 
 [features]
-default = ["std", "risczero"]
+default = ["std"]
 std = []
-external-secp = []
-risczero = []
 
 [dependencies]
+hex-literal = "0.4"
 
 [dev-dependencies]
 hex = "0.4"
-hex-literal = "0.4"
 
 [build-dependencies]
 cc = "1.0"

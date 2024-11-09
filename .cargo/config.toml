@@ -1,0 +1,8 @@
+[target.riscv32im-succinct-zkvm-elf]
+linker = "clang++"
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "link-arg=-nostartfiles",
+    "-C", "link-arg=-static",
+    "-C", "link-arg=-Wl,--gc-sections"
+]

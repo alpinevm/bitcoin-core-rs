@@ -1,11 +1,11 @@
 # Rust bitcoin-core
-Rust bindings with a minimal C++ FFI to access the validation engine of `bitcoin-core`.
+Rust bindings with a minimal C++ FFI to access the validation engine of `bitcoin-core`.<br>
 **supports SP1! (riscv32im)**
 
 ## Requirements
 
-- Rust (v1.82 tested)
-- Clang (v19 tested)
+- Rust (1.81 tested)
+- Clang (15.0.0 tested)
 
 ## Install RISCV GNU Toolchain
 
@@ -57,7 +57,7 @@ sudo gmake -j<num_cores>
 ```
 
 Using as library on MacOs
-Clang 18 or higher is known to function properly, instead of changing your default-installed clang version use this alias, assuming you installed `llvm@19` above. 
+Clang 15 or higher is known to function properly, instead of changing your default-installed clang version, temporarily use this alias, assuming you installed `llvm` as instructed above. 
 ```
-alias clang++="/opt/homebrew/opt/llvm@19/bin/clang++"
+alias clang++="/opt/homebrew/opt/llvm/bin/clang++"
 ```

@@ -8,12 +8,23 @@ extern "C"
 {
 #endif
 
-    // Perform SHA256 hash on input data
-    // input: pointer to input data
-    // input_len: length of input data in bytes
-    // output: pointer to output buffer (must be at least 32 bytes)
+    /**
+     * Performs SHA256 hash on input data
+     * @param input      Pointer to the input data to be hashed
+     * @param input_len  Length of the input data in bytes
+     * @param output     Pointer to a pre-allocated 32-byte buffer where the hash will be stored
+     */
     void sha256_hash(const unsigned char *input, unsigned int input_len, unsigned char output[32]);
-    bool check_pow(uint256 hash, unsigned int nBits, uint256 powLimit);
+
+    /**
+     * Validates a Bitcoin block header's proof of work
+     * @param header_bytes   Pointer to the 80-byte Bitcoin block header
+     * @param pow_limit      The proof of work limit (target threshold) to check against
+     * @return             Returns true if the header's proof of work is valid and below the target,
+     *                     false otherwise
+     */
+
+    bool check_header_pow(const unsigned char *header_bytes, uint256 pow_limit);
 
 #ifdef __cplusplus
 }
