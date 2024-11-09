@@ -1,5 +1,5 @@
 # Rust bitcoin-core
-Rust bindings with a minimal C++ FFI to access the validation engine of `bitcoin-core`.<br>
+Rust bindings with a minimal C++ FFI to access the validation engine of `bitcoin-core`<br>
 **supports SP1! (riscv32im)**
 
 ## Requirements
