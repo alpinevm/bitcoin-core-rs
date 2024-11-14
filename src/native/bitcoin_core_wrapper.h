@@ -10,21 +10,53 @@ extern "C"
 
     /**
      * Performs SHA256 hash on input data
-     * @param input      Pointer to the input data to be hashed
-     * @param input_len  Length of the input data in bytes
-     * @param output     Pointer to a pre-allocated 32-byte buffer where the hash will be stored
+     * @param[in]  input      Pointer to the input data to be hashed
+     * @param[in]  input_len  Length of the input data in bytes
+     * @param[out] hash_result Pointer to a pre-allocated 32-byte buffer where the hash will be stored
      */
-    void sha256_hash(const unsigned char *input, unsigned int input_len, unsigned char output[32]);
+    void sha256_hash(const unsigned char *input, const uint32_t input_len, unsigned char hash_result[32]);
 
     /**
-     * Validates a Bitcoin block header's proof of work
-     * @param header_bytes   Pointer to the 80-byte Bitcoin block header
-     * @param pow_limit      The proof of work limit (target threshold) to check against
-     * @return             Returns true if the header's proof of work is valid and below the target,
-     *                     false otherwise
+     * Gets the double SHA256 hash of a Bitcoin block header
+     * @param[in]  header_bytes   Pointer to the 80-byte Bitcoin block header
+     * @param[out] block_hash     Pointer to a pre-allocated 32-byte buffer where the hash will be stored
+     * @return                    Returns true if header was successfully deserialized and hashed,
+     *                           false otherwise
      */
+    bool get_header_hash(const unsigned char header_bytes[80], unsigned char block_hash[32]);
 
-    bool check_header_pow(const unsigned char *header_bytes, uint256 pow_limit);
+    /**
+     * Validates a Bitcoin block header's proof of work using its embedded nBits
+     * @param[in] header_bytes   Pointer to the 80-byte Bitcoin block header
+     * @return                  Returns true if the header's proof of work is valid,
+     *                         false otherwise
+     */
+    bool check_proof_of_work(const unsigned char header_bytes[80]);
+
+    /**
+     * Gets the height of the last difficulty retarget for a given height
+     * @param[in] height       The block height to check
+     * @return                The height of the last difficulty retarget
+     */
+    uint32_t get_retarget_height(const uint32_t height);
+
+    /**
+     * Calculates the next required proof of work (nBits) for a new block
+     *
+     * @param[in]  last_retarget_header_bytes  Pointer to the 80-byte header at last retarget
+     * @param[in]  previous_height             Height of the previous block
+     * @param[in]  previous_header_bytes       Pointer to the 80-byte previous block header
+     * @param[in]  header_bytes                Pointer to the 80-byte new block header
+     * @param[out] next_nbits                  Pointer where the calculated nBits will be stored
+     * @return                                Returns true if calculation was successful,
+     *                                        false otherwise
+     */
+    bool get_next_work_required(
+        const unsigned char last_retarget_header_bytes[80],
+        const uint32_t previous_height,
+        const unsigned char previous_header_bytes[80],
+        const unsigned char header_bytes[80],
+        uint32_t *next_nbits);
 
 #ifdef __cplusplus
 }

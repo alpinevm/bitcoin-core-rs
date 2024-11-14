@@ -14,7 +14,9 @@ default = ["std"]
 std = []
 
 [dependencies]
+eyre = "0.6.12"
 hex-literal = "0.4"
+thiserror = "2.0.3"
 
 [dev-dependencies]
 hex = "0.4"

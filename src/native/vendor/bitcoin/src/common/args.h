@@ -6,8 +6,8 @@
 #define BITCOIN_COMMON_ARGS_H
 
 #include <common/settings.h>
-#include <compat/compat.h>
-#include <sync.h>
+// #include <compat/compat.h>
+// #include <sync.h>
 #include <util/chaintype.h>
 #include <util/fs.h>
 
@@ -23,8 +23,8 @@
 
 class ArgsManager;
 
-extern const char * const BITCOIN_CONF_FILENAME;
-extern const char * const BITCOIN_SETTINGS_FILENAME;
+extern const char* const BITCOIN_CONF_FILENAME;
+extern const char* const BITCOIN_SETTINGS_FILENAME;
 
 // Return true if -datadir option points to a valid directory or is not specified.
 bool CheckDataDirOption(const ArgsManager& args);
@@ -76,7 +76,7 @@ struct KeyInfo {
 KeyInfo InterpretKey(std::string key);
 
 std::optional<common::SettingsValue> InterpretValue(const KeyInfo& key, const std::string* value,
-                                                         unsigned int flags, std::string& error);
+                                                    unsigned int flags, std::string& error);
 
 struct SectionInfo {
     std::string m_name;
@@ -101,7 +101,7 @@ public:
      * interpreted.
      */
     enum Flags : uint32_t {
-        ALLOW_ANY = 0x01,         //!< disable validation
+        ALLOW_ANY = 0x01, //!< disable validation
         // ALLOW_BOOL = 0x02,     //!< unimplemented, draft implementation in #16545
         // ALLOW_INT = 0x04,      //!< unimplemented, draft implementation in #16545
         // ALLOW_STRING = 0x08,   //!< unimplemented, draft implementation in #16545
@@ -122,25 +122,24 @@ public:
     };
 
 protected:
-    struct Arg
-    {
+    struct Arg {
         std::string m_help_param;
         std::string m_help_text;
         unsigned int m_flags;
     };
 
-    mutable RecursiveMutex cs_args;
-    common::Settings m_settings GUARDED_BY(cs_args);
-    std::vector<std::string> m_command GUARDED_BY(cs_args);
-    std::string m_network GUARDED_BY(cs_args);
-    std::set<std::string> m_network_only_args GUARDED_BY(cs_args);
-    std::map<OptionsCategory, std::map<std::string, Arg>> m_available_args GUARDED_BY(cs_args);
-    bool m_accept_any_command GUARDED_BY(cs_args){true};
-    std::list<SectionInfo> m_config_sections GUARDED_BY(cs_args);
-    std::optional<fs::path> m_config_path GUARDED_BY(cs_args);
-    mutable fs::path m_cached_blocks_path GUARDED_BY(cs_args);
-    mutable fs::path m_cached_datadir_path GUARDED_BY(cs_args);
-    mutable fs::path m_cached_network_datadir_path GUARDED_BY(cs_args);
+    // mutable RecursiveMutex cs_args;
+    common::Settings m_settings;
+    std::vector<std::string> m_command;
+    std::string m_network;
+    std::set<std::string> m_network_only_args;
+    std::map<OptionsCategory, std::map<std::string, Arg>> m_available_args;
+    bool m_accept_any_command{true};
+    std::list<SectionInfo> m_config_sections;
+    std::optional<fs::path> m_config_path;
+    mutable fs::path m_cached_blocks_path;
+    mutable fs::path m_cached_datadir_path;
+    mutable fs::path m_cached_network_datadir_path;
 
     [[nodiscard]] bool ReadConfigStream(std::istream& stream, const std::string& filepath, std::string& error, bool ignore_invalid_keys = false);
 
@@ -149,9 +148,9 @@ protected:
      * depending on the current network and whether the setting is
      * network-specific.
      */
-    bool UseDefaultSection(const std::string& arg) const EXCLUSIVE_LOCKS_REQUIRED(cs_args);
+    bool UseDefaultSection(const std::string& arg) const;
 
- public:
+public:
     /**
      * Get setting value.
      *
@@ -357,8 +356,8 @@ protected:
     /**
      * Clear available arguments
      */
-    void ClearArgs() {
-        LOCK(cs_args);
+    void ClearArgs()
+    {
         m_available_args.clear();
         m_network_only_args.clear();
     }
@@ -403,7 +402,6 @@ protected:
     template <typename Fn>
     void LockSettings(Fn&& fn)
     {
-        LOCK(cs_args);
         fn(m_settings);
     }
 

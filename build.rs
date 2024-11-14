@@ -25,6 +25,9 @@ fn main() {
             .flag("-ffunction-sections")
             .flag("-flto")
             .flag("-fno-threadsafe-statics")
+            .flag("-D_POSIX_TIMERS")
+            .flag("-include")
+            .flag("sys/time.h")
             .target("riscv32im-unknown-none-elf");
     }
 
@@ -32,7 +35,9 @@ fn main() {
         .flag("-std=c++20")
         .flag("-Wno-unused-parameter")
         .flag("-Wno-unused-variable")
+        .flag("-fvisibility=default")
         .include("src/native/vendor/bitcoin/src")
+        .include("src/native/vendor/bitcoin/src/univalue/include")
         .file("src/native/vendor/bitcoin/src/crypto/sha256.cpp")
         .file("src/native/vendor/bitcoin/src/pow.cpp")
         .file("src/native/vendor/bitcoin/src/uint256.cpp")
@@ -40,8 +45,30 @@ fn main() {
         .file("src/native/vendor/bitcoin/src/primitives/block.cpp")
         .file("src/native/vendor/bitcoin/src/streams.cpp")
         .file("src/native/vendor/bitcoin/src/support/cleanse.cpp")
+        .file("src/native/vendor/bitcoin/src/chain.cpp")
+        .file("src/native/vendor/bitcoin/src/chainparams.cpp")
+        .file("src/native/vendor/bitcoin/src/kernel/chainparams.cpp")
+        .file("src/native/vendor/bitcoin/src/chainparamsbase.cpp")
+        .file("src/native/vendor/bitcoin/src/consensus/merkle.cpp")
+        .file("src/native/vendor/bitcoin/src/util/chaintype.cpp")
+        .file("src/native/vendor/bitcoin/src/util/strencodings.cpp")
+        .file("src/native/vendor/bitcoin/src/util/string.cpp")
+        .file("src/native/vendor/bitcoin/src/util/time.cpp")
+        .file("src/native/vendor/bitcoin/src/deploymentinfo.cpp")
+        .file("src/native/vendor/bitcoin/src/hash.cpp")
+        .file("src/native/vendor/bitcoin/src/primitives/transaction.cpp")
+        .file("src/native/vendor/bitcoin/src/script/interpreter.cpp")
+        .file("src/native/vendor/bitcoin/src/script/script.cpp")
+        .file("src/native/vendor/bitcoin/src/crypto/hex_base.cpp")
+        .file("src/native/vendor/bitcoin/src/common/args.cpp")
+        .file("src/native/vendor/bitcoin/src/util/threadnames.cpp")
+        .file("src/native/vendor/bitcoin/src/common/settings.cpp")
+        .file("src/native/vendor/bitcoin/src/univalue/lib/univalue.cpp")
+        .file("src/native/vendor/bitcoin/src/univalue/lib/univalue_get.cpp")
+        .file("src/native/vendor/bitcoin/src/univalue/lib/univalue_write.cpp")
+        .file("src/native/vendor/bitcoin/src/univalue/lib/univalue_read.cpp")
         .file("src/native/bitcoin_core_wrapper.cpp")
-        .compile("bitcoin_core_lib.a");
+        .compile("bitcoin_core_lib");
 
     if env::var("CARGO_CFG_TARGET_OS").unwrap() == "macos" {
         println!("cargo:rustc-link-lib=c++");
@@ -67,6 +94,5 @@ fn main() {
         println!("cargo:rustc-link-lib=nosys");
     }
 
-    println!("cargo:rerun-if-changed=src/lib.rs");
     println!("cargo:rerun-if-changed=src/native");
 }

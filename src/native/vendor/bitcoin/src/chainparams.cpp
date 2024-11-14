@@ -9,7 +9,7 @@
 #include <common/args.h>
 #include <consensus/params.h>
 #include <deploymentinfo.h>
-#include <logging.h>
+// #include <logging.h>
 #include <tinyformat.h>
 #include <util/chaintype.h>
 #include <util/strencodings.h>
@@ -87,11 +87,11 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
             vbparams.min_activation_height = 0;
         }
         bool found = false;
-        for (int j=0; j < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++j) {
+        for (int j = 0; j < (int)Consensus::MAX_VERSION_BITS_DEPLOYMENTS; ++j) {
             if (vDeploymentParams[0] == VersionBitsDeploymentInfo[j].name) {
                 options.version_bits_parameters[Consensus::DeploymentPos(j)] = vbparams;
                 found = true;
-                LogPrintf("Setting version bits activation parameters for %s to start=%ld, timeout=%ld, min_activation_height=%d\n", vDeploymentParams[0], vbparams.start_time, vbparams.timeout, vbparams.min_activation_height);
+                // LogPrintf("Setting version bits activation parameters for %s to start=%ld, timeout=%ld, min_activation_height=%d\n", vDeploymentParams[0], vbparams.start_time, vbparams.timeout, vbparams.min_activation_height);
                 break;
             }
         }
@@ -103,7 +103,8 @@ void ReadRegTestArgs(const ArgsManager& args, CChainParams::RegTestOptions& opti
 
 static std::unique_ptr<const CChainParams> globalChainParams;
 
-const CChainParams &Params() {
+const CChainParams& Params()
+{
     assert(globalChainParams);
     return *globalChainParams;
 }
