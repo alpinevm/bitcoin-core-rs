@@ -11,14 +11,6 @@
 
 // use snake case to avoid conflict with core
 
-static struct BitcoinCoreInit
-{
-    BitcoinCoreInit()
-    {
-        SelectParams(ChainType::MAIN);
-    }
-} bitcoin_core_init;
-
 static bool deserialize_header(const unsigned char header_bytes[80], CBlockHeader &header)
 {
     std::vector<unsigned char> serialized_header(header_bytes, header_bytes + 80);
@@ -90,8 +82,9 @@ extern "C" bool get_header_hash(const unsigned char header_bytes[80], unsigned c
     return true;
 }
 
-extern "C" bool check_proof_of_work(const unsigned char header_bytes[80])
+extern "C" bool check_proof_of_work(const unsigned char *header_bytes)
 {
+    SelectParams(ChainType::MAIN);
     const Consensus::Params &params = Params().GetConsensus();
 
     CBlockHeader header;
@@ -104,6 +97,7 @@ extern "C" bool check_proof_of_work(const unsigned char header_bytes[80])
 
 extern "C" uint32_t get_retarget_height(const uint32_t height)
 {
+    SelectParams(ChainType::MAIN);
     const Consensus::Params &params = Params().GetConsensus();
     if (height < params.DifficultyAdjustmentInterval())
     {
@@ -119,6 +113,8 @@ extern "C" bool get_next_work_required(
     const unsigned char header_bytes[80],
     uint32_t *next_nbits)
 {
+
+    SelectParams(ChainType::MAIN);
     const Consensus::Params &params = Params().GetConsensus();
     CBlockHeader last_retarget_header;
     CBlockHeader previous_header;
