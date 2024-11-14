@@ -15,8 +15,21 @@ This means that only the logic for validating block header proof of work is expo
 - add pure AcceptBlockHeader like function to FFI?
 - create patch file of bitcoin diff
 - validate build README instructions for Ubuntu and MacOs
+- exclude vendored files and sp1-test code in crate
+- documentation
+
+## Tests
+Unit tests
+```
+cargo test
+```
+Smoke test RISCV target using SP1
+```
+cargo run --release --manifest-path sp1-test/Cargo.toml -- --execute
+```
 
 ## Usage 
+
 On typical Unix-like platforms, the build script should handle linking by default.
 For RISCV, continue as follows:
 
