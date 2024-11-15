@@ -593,7 +593,6 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "eyre",
- "hex-literal",
  "thiserror 2.0.3",
 ]
 

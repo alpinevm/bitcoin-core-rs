@@ -10,14 +10,50 @@ pub fn main() {
     let serialized_header = sp1_zkvm::io::read::<Vec<u8>>();
     let serialized_header_array: [u8; 80] = serialized_header.try_into().unwrap();
 
-    println!("Checking header...");
+    println!("Testing all Bitcoin functions...");
 
-    assert!(bitcoin_core_rs::check_pow(serialized_header_array));
+    // Test sha256
+    let hash = bitcoin_core_rs::sha256(&serialized_header_array);
+    println!("SHA256 hash computed");
 
-    // Encode the public values of the program.
-    let bytes = serialized_header_array.to_vec();
+    // Test get_block_hash
+    let block_hash = bitcoin_core_rs::get_block_hash(&serialized_header_array).unwrap();
+    println!("Block hash computed");
 
-    // Commit to the public values of the program. The final proof will have a commitment to all the
-    // bytes that were committed to.
+    // Test check_proof_of_work
+    assert!(bitcoin_core_rs::check_proof_of_work(
+        &serialized_header_array
+    ));
+    println!("Proof of work verified");
+
+    // Test get_retarget_height (using a sample height)
+    let height = 40320u32;
+    let retarget_height = bitcoin_core_rs::get_retarget_height(height);
+    println!("Retarget height computed: {}", retarget_height);
+
+    // Test get_next_work_required
+    // Note: We're using the same header for all parameters here
+    let next_work = bitcoin_core_rs::get_next_work_required(
+        &serialized_header_array,
+        height - 1,
+        &serialized_header_array,
+        &serialized_header_array,
+    )
+    .unwrap();
+    println!("Next work requirement computed: {}", next_work);
+
+    // Test get_block_proof
+    let block_proof = bitcoin_core_rs::get_block_proof(&serialized_header_array).unwrap();
+    println!("Block proof computed");
+
+    // Encode and commit the public values
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&hash);
+    bytes.extend_from_slice(&block_hash);
+    bytes.extend_from_slice(&block_proof);
+    bytes.extend_from_slice(&serialized_header_array);
+    bytes.extend_from_slice(&retarget_height.to_le_bytes());
+    bytes.extend_from_slice(&next_work.to_le_bytes());
+
     sp1_zkvm::io::commit_slice(&bytes);
 }
