@@ -27,7 +27,7 @@ static bool deserialize_header(const unsigned char header_bytes[80], CBlockHeade
 }
 
 // Simple fork of GetNextWorkRequired that doesn't require an index, so we don't have to build a skip list
-unsigned int GetNextWorkRequiredNoIndex(const CBlockIndex *pindexLast, const CBlockHeader *pblock, const CBlockIndex *pretarget, const Consensus::Params &params)
+static uint32_t GetNextWorkRequiredNoIndex(const CBlockIndex *pindexLast, const CBlockHeader *pblock, const CBlockIndex *pretarget, const Consensus::Params &params)
 {
     assert(pindexLast != nullptr);
     assert(pretarget != nullptr);
@@ -106,6 +106,18 @@ extern "C" uint32_t get_retarget_height(const uint32_t height)
     return ((height - 1) / params.DifficultyAdjustmentInterval()) * params.DifficultyAdjustmentInterval();
 }
 
+extern "C" bool get_block_proof(const unsigned char header_bytes[80], unsigned char proof[32])
+{
+    CBlockHeader header;
+    if (!deserialize_header(header_bytes, header))
+    {
+        return false;
+    }
+    CBlockIndex header_index(header);
+    std::memcpy(proof, ArithToUint256(GetBlockProof(header_index)).data(), 32);
+    return true;
+}
+
 extern "C" bool get_next_work_required(
     const unsigned char last_retarget_header_bytes[80],
     const uint32_t previous_height,
@@ -128,15 +140,15 @@ extern "C" bool get_next_work_required(
     }
 
     // Create previous block index and set its height
-    std::unique_ptr<CBlockIndex> previous_index = std::make_unique<CBlockIndex>(previous_header);
-    previous_index->nHeight = previous_height;
+    CBlockIndex previous_index(previous_header);
+    previous_index.nHeight = previous_height;
 
     // Create the last retarget block index and set its height
-    std::unique_ptr<CBlockIndex> last_retarget_index = std::make_unique<CBlockIndex>(last_retarget_header);
-    last_retarget_index->nHeight = get_retarget_height(previous_height + 1);
+    CBlockIndex last_retarget_index(last_retarget_header);
+    last_retarget_index.nHeight = get_retarget_height(previous_height + 1);
 
     // Calculate the next work required
-    *next_nbits = GetNextWorkRequiredNoIndex(previous_index.get(), &header, last_retarget_index.get(), params);
+    *next_nbits = GetNextWorkRequiredNoIndex(&previous_index, &header, &last_retarget_index, params);
 
     return true;
 }

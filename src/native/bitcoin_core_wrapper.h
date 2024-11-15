@@ -41,6 +41,15 @@ extern "C"
     uint32_t get_retarget_height(const uint32_t height);
 
     /**
+     * Gets the proof of a Bitcoin block header
+     * @param[in]  header_bytes   Pointer to the 80-byte Bitcoin block header
+     * @param[out] proof          Pointer to a pre-allocated 32-byte buffer where the proof will be stored
+     * @return                    Returns true if header was successfully deserialized and proof calculated,
+     *                           false otherwise
+     */
+    bool get_block_proof(const unsigned char header_bytes[80], unsigned char proof[32]);
+
+    /**
      * Calculates the next required proof of work (nBits) for a new block
      *
      * @param[in]  last_retarget_header_bytes  Pointer to the 80-byte header at last retarget

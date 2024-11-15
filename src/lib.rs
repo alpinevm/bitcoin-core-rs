@@ -17,6 +17,7 @@ mod ffi {
             header_bytes: *const u8,
             next_nbits: *mut u32,
         ) -> bool;
+        pub(crate) fn get_block_proof(header_bytes: *const u8, proof: *mut u8) -> bool;
     }
 }
 
@@ -28,7 +29,7 @@ pub fn sha256(input: &[u8]) -> [u8; 32] {
     output
 }
 
-pub fn get_block_hash(header: [u8; 80]) -> Result<[u8; 32]> {
+pub fn get_block_hash(header: &[u8; 80]) -> Result<[u8; 32]> {
     let mut hash = [0u8; 32];
     let success = unsafe { ffi::get_header_hash(header.as_ptr(), hash.as_mut_ptr()) };
     if success {
@@ -38,7 +39,7 @@ pub fn get_block_hash(header: [u8; 80]) -> Result<[u8; 32]> {
     }
 }
 
-pub fn check_pow(header: [u8; 80]) -> bool {
+pub fn check_proof_of_work(header: &[u8; 80]) -> bool {
     unsafe { ffi::check_proof_of_work(header.as_ptr()) }
 }
 
@@ -69,10 +70,20 @@ pub fn get_next_work_required(
     }
 }
 
+pub fn get_block_proof(header: &[u8; 80]) -> Result<[u8; 32]> {
+    let mut proof = [0u8; 32];
+    let success = unsafe { ffi::get_block_proof(header.as_ptr(), proof.as_mut_ptr()) };
+    if success {
+        Ok(proof)
+    } else {
+        Err(BitcoinError::DeserializeError.into())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hex_literal::hex;
+    use alloy_primitives::{hex, hex_literal};
     use std::collections::HashMap;
 
     // Define a HashMap of height to hex values
@@ -110,27 +121,27 @@ mod tests {
         // Test case 1: Valid bitcoin block header that meets PoW requirement
         let serialized_header =
             hex!("00606a2a6da096d2b8dbbbed775ac73ebffb4f8005625ff082d902000000000000000000636f25b00a6dba593285caae62bc20cb5c022050efdae664ff52255c1c2e1b754de10867cd0e031739d4a0ef");
-        assert!(check_pow(serialized_header));
+        assert!(check_proof_of_work(&serialized_header));
     }
 
     #[test]
     fn test_check_pow_null_header() {
         let serialized_header =
             hex!("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-        assert!(!check_pow(serialized_header));
+        assert!(!check_proof_of_work(&serialized_header));
     }
 
     #[test]
     fn test_check_pow_fake_block() {
         let serialized_header =
             hex!("010000006024f927c294aafe77f7eff56d0d35e9309dc6a5595b54ffa79200000000000002d8003f9c8c10750d7cb64d3e9cd36cdfc3f0b20db3afd1f25b3657002515a5fa71b04dacb5001ba2e71604");
-        assert!(!check_pow(serialized_header));
+        assert!(!check_proof_of_work(&serialized_header));
     }
 
     #[test]
     fn test_header_hash() {
         let header = hex!("01000000858a5c6d458833aa83f7b7e56d71c604cb71165ebb8104b82f64de8d00000000e408c11029b5fdbb92ea0eeb8dfa138ffa3acce0f69d7deebeb1400c85042e01723f6b4bc38c001d09bd8bd5");
-        let hash = get_block_hash(header).unwrap();
+        let hash = get_block_hash(&header).unwrap();
         assert_eq!(
             hash,
             hex!("8a3253c8acce55404a8dabd52baad6300e12f754698455600950bb1500000000")
@@ -171,7 +182,7 @@ mod tests {
         )
         .unwrap();
 
-        // The known (updated) target for block 40320
+        // The known target for block 40320
         assert_eq!(result, 0x1c654657);
     }
 
@@ -215,5 +226,16 @@ mod tests {
         .unwrap();
 
         assert_eq!(result, 0x1c654657);
+    }
+
+    #[test]
+    fn test_get_block_proof() {
+        let genesis_header = hex!("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c");
+        let proof = get_block_proof(&genesis_header).unwrap();
+        println!("{:?}", hex::encode(proof));
+        assert_eq!(
+            proof,
+            hex!("0000000000000000000000000000000000000000000000000000000000000000")
+        );
     }
 }
