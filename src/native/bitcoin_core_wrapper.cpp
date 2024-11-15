@@ -4,12 +4,28 @@
 #include "vendor/bitcoin/src/streams.h"
 #include "vendor/bitcoin/src/primitives/block.h"
 #include "vendor/bitcoin/src/chain.h"
-#include "vendor/bitcoin/src/chainparams.h"
+#include "vendor/bitcoin/src/kernel/chainparams.h"
 
 #include <memory>
 #include <vector>
 
-// use snake case to avoid conflict with core
+// The config initializers in core create global state,
+// so we need to duplicate the relevant ones
+// in this pure initializer to avoid that
+static const Consensus::Params get_consensus_params()
+{
+    Consensus::Params consensus;
+    consensus.signet_blocks = false;
+    consensus.signet_challenge.clear();
+    consensus.nSubsidyHalvingInterval = 210000;
+    consensus.powLimit = uint256::FromHex("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff").value();
+    consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
+    consensus.nPowTargetSpacing = 10 * 60;
+    consensus.fPowAllowMinDifficultyBlocks = false;
+    consensus.enforce_BIP94 = false;
+    consensus.fPowNoRetargeting = false;
+    return consensus;
+}
 
 static bool deserialize_header(const unsigned char header_bytes[80], CBlockHeader &header)
 {
@@ -84,9 +100,7 @@ extern "C" bool get_header_hash(const unsigned char header_bytes[80], unsigned c
 
 extern "C" bool check_proof_of_work(const unsigned char *header_bytes)
 {
-    SelectParams(ChainType::MAIN);
-    const Consensus::Params &params = Params().GetConsensus();
-
+    const Consensus::Params &params = get_consensus_params();
     CBlockHeader header;
     if (!deserialize_header(header_bytes, header))
     {
@@ -97,8 +111,7 @@ extern "C" bool check_proof_of_work(const unsigned char *header_bytes)
 
 extern "C" uint32_t get_retarget_height(const uint32_t height)
 {
-    SelectParams(ChainType::MAIN);
-    const Consensus::Params &params = Params().GetConsensus();
+    const Consensus::Params &params = get_consensus_params();
     if (height < params.DifficultyAdjustmentInterval())
     {
         return 0;
@@ -126,8 +139,8 @@ extern "C" bool get_next_work_required(
     uint32_t *next_nbits)
 {
 
-    SelectParams(ChainType::MAIN);
-    const Consensus::Params &params = Params().GetConsensus();
+    const Consensus::Params &params = get_consensus_params();
+    assert(params.nPowTargetSpacing > 0);
     CBlockHeader last_retarget_header;
     CBlockHeader previous_header;
     CBlockHeader header;

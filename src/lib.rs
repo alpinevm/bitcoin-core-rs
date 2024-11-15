@@ -83,7 +83,8 @@ pub fn get_block_proof(header: &[u8; 80]) -> Result<[u8; 32]> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloy_primitives::{hex, hex_literal};
+    use alloy_primitives::hex;
+    use alloy_primitives::{utils::format_units, U256};
     use std::collections::HashMap;
 
     // Define a HashMap of height to hex values
@@ -140,12 +141,12 @@ mod tests {
 
     #[test]
     fn test_header_hash() {
+        let mut expected_hash =
+            hex!("0000000015bb50096055846954f7120e30d6aa2bd5ab8d4a4055ceacc853328a");
+        expected_hash.reverse();
         let header = hex!("01000000858a5c6d458833aa83f7b7e56d71c604cb71165ebb8104b82f64de8d00000000e408c11029b5fdbb92ea0eeb8dfa138ffa3acce0f69d7deebeb1400c85042e01723f6b4bc38c001d09bd8bd5");
         let hash = get_block_hash(&header).unwrap();
-        assert_eq!(
-            hash,
-            hex!("8a3253c8acce55404a8dabd52baad6300e12f754698455600950bb1500000000")
-        );
+        assert_eq!(hash, expected_hash);
     }
 
     #[test]
@@ -229,13 +230,32 @@ mod tests {
     }
 
     #[test]
-    fn test_get_block_proof() {
+    fn test_get_block_proof_genesis_block() {
+        let mut expected_proof =
+            hex!("0000000000000000000000000000000000000000000000000000000100010001");
+        expected_proof.reverse();
         let genesis_header = hex!("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c");
         let proof = get_block_proof(&genesis_header).unwrap();
-        println!("{:?}", hex::encode(proof));
-        assert_eq!(
-            proof,
-            hex!("0000000000000000000000000000000000000000000000000000000000000000")
-        );
+        assert_eq!(proof, expected_proof);
+    }
+
+    #[test]
+    fn test_get_block_proof_standard_block() {
+        let mut expected_proof =
+            hex!("0000000000000000000000000000000000000000000000000000aa83470b0222");
+        expected_proof.reverse();
+
+        let mut previous_header_proof =
+            hex!("0000000000000000000000000000000000000000000000000000aa80bfeea100");
+        previous_header_proof.reverse();
+
+        // block 40320
+        let header = hex!("010000001a231097b6ab6279c80f24674a2c8ee5b9a848e1d45715ad89b6358100000000a822bafe6ed8600e3ffce6d61d10df1927eafe9bbf677cb44c4d209f143c6ba8db8c784b5746651cce222118");
+        let proof = get_block_proof(&header).unwrap();
+
+        let calculated_chainwork: [u8; 32] =
+            (U256::from_le_bytes(previous_header_proof) + U256::from_le_bytes(proof)).to_le_bytes();
+
+        assert_eq!(calculated_chainwork, expected_proof);
     }
 }
