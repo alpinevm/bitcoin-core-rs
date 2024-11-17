@@ -18,6 +18,10 @@ mod ffi {
             next_retarget_header_bytes: *mut u8,
         ) -> bool;
         pub(crate) fn get_block_proof(header_bytes: *const u8, proof: *mut u8) -> bool;
+        pub(crate) fn check_header_connection(
+            header_bytes: *const u8,
+            previous_header_bytes: *const u8,
+        ) -> bool;
     }
 }
 
@@ -78,6 +82,10 @@ pub fn get_block_proof(header: &[u8; 80]) -> Result<[u8; 32]> {
     } else {
         Err(BitcoinError::DeserializeError.into())
     }
+}
+
+pub fn check_header_connection(header: &[u8; 80], previous_header: &[u8; 80]) -> bool {
+    unsafe { ffi::check_header_connection(header.as_ptr(), previous_header.as_ptr()) }
 }
 
 #[cfg(test)]
@@ -258,5 +266,22 @@ mod tests {
             (U256::from_le_bytes(previous_header_proof) + U256::from_le_bytes(proof)).to_le_bytes();
 
         assert_eq!(calculated_chainwork, expected_proof);
+    }
+
+    #[test]
+    fn test_header_connection() {
+        let headers = get_headers();
+
+        // Test connecting headers 40319 -> 40320
+        let header_40320 = headers.get(&40320).unwrap();
+        let header_40319 = headers.get(&40319).unwrap();
+        assert!(check_header_connection(header_40320, header_40319));
+
+        // Test connecting headers 40320 -> 40321
+        let header_40321 = headers.get(&40321).unwrap();
+        assert!(check_header_connection(header_40321, header_40320));
+
+        // Test invalid connection
+        assert!(!check_header_connection(header_40321, header_40319));
     }
 }
