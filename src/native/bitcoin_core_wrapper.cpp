@@ -9,9 +9,10 @@
 #include <memory>
 #include <vector>
 
-// The config initializers in core create global state,
-// so we need to duplicate the relevant ones
-// in this pure initializer to avoid that
+static const size_t HEADER_LENGTH = 80;
+
+// The config initializers in bitcoin core create global state,
+// so we need to duplicate the relevant ones in this pure initializer to avoid that
 static const Consensus::Params get_consensus_params()
 {
     Consensus::Params consensus;
@@ -27,9 +28,9 @@ static const Consensus::Params get_consensus_params()
     return consensus;
 }
 
-static bool deserialize_header(const unsigned char header_bytes[80], CBlockHeader &header)
+static bool deserialize_header(const unsigned char *header_bytes, CBlockHeader &header)
 {
-    std::vector<unsigned char> serialized_header(header_bytes, header_bytes + 80);
+    std::vector<unsigned char> serialized_header(header_bytes, header_bytes + HEADER_LENGTH);
     DataStream ser_header{serialized_header};
     try
     {
@@ -86,7 +87,7 @@ extern "C" void sha256_hash(const unsigned char *input, const uint32_t input_len
     sha256.Finalize(hash_result);
 }
 
-extern "C" bool get_header_hash(const unsigned char header_bytes[80], unsigned char block_hash[32])
+extern "C" bool get_header_hash(const unsigned char *header_bytes, unsigned char *block_hash)
 {
     CBlockHeader header;
     if (!deserialize_header(header_bytes, header))
@@ -119,7 +120,7 @@ extern "C" uint32_t get_retarget_height(const uint32_t height)
     return ((height - 1) / params.DifficultyAdjustmentInterval()) * params.DifficultyAdjustmentInterval();
 }
 
-extern "C" bool get_block_proof(const unsigned char header_bytes[80], unsigned char proof[32])
+extern "C" bool get_block_proof(const unsigned char *header_bytes, unsigned char *proof)
 {
     CBlockHeader header;
     if (!deserialize_header(header_bytes, header))
@@ -131,16 +132,15 @@ extern "C" bool get_block_proof(const unsigned char header_bytes[80], unsigned c
     return true;
 }
 
-extern "C" bool get_next_work_required(
-    const unsigned char last_retarget_header_bytes[80],
+extern "C" bool validate_next_work_required(
+    const unsigned char *last_retarget_header_bytes,
     const uint32_t previous_height,
-    const unsigned char previous_header_bytes[80],
-    const unsigned char header_bytes[80],
-    uint32_t *next_nbits)
+    const unsigned char *previous_header_bytes,
+    const unsigned char *header_bytes,
+    unsigned char *next_retarget_header_bytes)
 {
 
     const Consensus::Params &params = get_consensus_params();
-    assert(params.nPowTargetSpacing > 0);
     CBlockHeader last_retarget_header;
     CBlockHeader previous_header;
     CBlockHeader header;
@@ -160,8 +160,37 @@ extern "C" bool get_next_work_required(
     CBlockIndex last_retarget_index(last_retarget_header);
     last_retarget_index.nHeight = get_retarget_height(previous_height + 1);
 
-    // Calculate the next work required
-    *next_nbits = GetNextWorkRequiredNoIndex(&previous_index, &header, &last_retarget_index, params);
+    // Calculate the next work required for the header
+    uint32_t calculated_next_nbits = GetNextWorkRequiredNoIndex(&previous_index, &header, &last_retarget_index, params);
+
+    if (header.nBits != calculated_next_nbits)
+    {
+        return false;
+    }
+
+    // If the difficulty has changed, we need to set the next retarget header to the header
+    if (header.nBits != previous_header.nBits)
+    {
+        std::memcpy(next_retarget_header_bytes, header_bytes, HEADER_LENGTH);
+    }
+    else
+    {
+        std::memcpy(next_retarget_header_bytes, last_retarget_header_bytes, HEADER_LENGTH);
+    }
 
     return true;
+}
+
+extern "C" bool check_header_connection(
+    const unsigned char *header_bytes,
+    const unsigned char *previous_header_bytes)
+{
+    CBlockHeader header;
+    CBlockHeader previous_header;
+    if (!deserialize_header(header_bytes, header) ||
+        !deserialize_header(previous_header_bytes, previous_header))
+    {
+        return false;
+    }
+    return header.hashPrevBlock == previous_header.GetHash();
 }

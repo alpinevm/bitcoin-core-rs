@@ -10,12 +10,12 @@ mod ffi {
         pub(crate) fn get_header_hash(header_bytes: *const u8, block_hash: *mut u8) -> bool;
         pub(crate) fn check_proof_of_work(header_bytes: *const u8) -> bool;
         pub(crate) fn get_retarget_height(height: u32) -> u32;
-        pub(crate) fn get_next_work_required(
+        pub(crate) fn validate_next_work_required(
             last_retarget_header_bytes: *const u8,
             previous_height: u32,
             previous_header_bytes: *const u8,
             header_bytes: *const u8,
-            next_nbits: *mut u32,
+            next_retarget_header_bytes: *mut u8,
         ) -> bool;
         pub(crate) fn get_block_proof(header_bytes: *const u8, proof: *mut u8) -> bool;
     }
@@ -52,19 +52,19 @@ pub fn get_next_work_required(
     previous_height: u32,
     previous_header: &[u8; 80],
     current_header: &[u8; 80],
-) -> Result<u32> {
-    let mut next_nbits = 0u32;
+) -> Result<[u8; 80]> {
+    let mut next_retarget_header = [0u8; 80];
     let success = unsafe {
-        ffi::get_next_work_required(
+        ffi::validate_next_work_required(
             last_retarget_header.as_ptr(),
             previous_height,
             previous_header.as_ptr(),
             current_header.as_ptr(),
-            &mut next_nbits,
+            next_retarget_header.as_mut_ptr(),
         )
     };
     if success {
-        Ok(next_nbits)
+        Ok(next_retarget_header)
     } else {
         Err(BitcoinError::WorkRequirementError.into())
     }
@@ -183,8 +183,8 @@ mod tests {
         )
         .unwrap();
 
-        // The known target for block 40320
-        assert_eq!(result, 0x1c654657);
+        // The 40320 was a retarget block, so the next retarget header should be the same as the new header
+        assert_eq!(result, *new_header);
     }
 
     #[test]
@@ -205,13 +205,14 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(result, 0x1d008cc3);
+        // The 40319 was a normal block so it should be the same as the original retarget header
+        assert_eq!(result, *last_retarget_header);
     }
 
     #[test]
-    fn test_get_next_work_required_right_after_retarget() {
+    fn test_get_next_work_required_right_retarget_is_previous() {
         let headers = get_headers();
-        let retarget_height = 38304;
+        let retarget_height = 40320;
         let previous_height = 40320;
         let next_height = 40321;
         let last_retarget_header = *headers.get(&retarget_height).unwrap();
@@ -226,7 +227,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(result, 0x1c654657);
+        assert_eq!(result, *last_retarget_header);
     }
 
     #[test]
