@@ -47,7 +47,7 @@ pub fn get_retarget_height(height: u32) -> u32 {
     unsafe { ffi::get_retarget_height(height) }
 }
 
-pub fn get_next_work_required(
+pub fn validate_next_work_required(
     last_retarget_header: &[u8; 80],
     previous_height: u32,
     previous_header: &[u8; 80],
@@ -175,7 +175,7 @@ mod tests {
         let previous_header = *headers.get(&previous_height).unwrap();
         let new_header = *headers.get(&next_height).unwrap();
 
-        let result = get_next_work_required(
+        let result = validate_next_work_required(
             last_retarget_header,
             previous_height,
             previous_header,
@@ -197,7 +197,7 @@ mod tests {
         let previous_header = *headers.get(&previous_height).unwrap();
         let new_header = *headers.get(&next_height).unwrap();
 
-        let result = get_next_work_required(
+        let result = validate_next_work_required(
             last_retarget_header,
             previous_height,
             previous_header,
@@ -219,7 +219,7 @@ mod tests {
         let previous_header = *headers.get(&previous_height).unwrap();
         let new_header = *headers.get(&next_height).unwrap();
 
-        let result = get_next_work_required(
+        let result = validate_next_work_required(
             last_retarget_header,
             previous_height,
             previous_header,
