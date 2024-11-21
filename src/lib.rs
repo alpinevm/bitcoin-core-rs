@@ -238,6 +238,33 @@ mod tests {
         assert_eq!(result, *last_retarget_header);
     }
 
+    // this test is useful to make sure that we're retargeting to new headers
+    // even if a difficulty adjustment doesn't occur
+    #[test]
+    fn test_get_next_work_required_before_first_difficulty_adjustment() {
+        let previous_height = 30239;
+        let previous_header = hex!("01000000e8f9ca4b3e84dabb0a95630692810d7485e203bae781b93b0c43f70900000000889c30533589222d82dc2314bda2154e8ad6b89d626231fd5e200555805f6d3faf4b2b4bffff001d072a9d6f");
+        let next_header = hex!("01000000e6bf7fd7f7790a63786faa878d0dc7fd8f2ff365732e45862c66075100000000700d342f65c7b6834dffb615358a1897016f0448913372190cbe3d27a4b53355b1512b4bffff001dbfb02519");
+        let previous_retarget_height = 28224;
+        assert_eq!(
+            get_retarget_height(previous_height),
+            previous_retarget_height
+        );
+        let last_retarget_header = hex!("010000000bc8739494b0c7c5a575a09b33af1e44fd6eaf71064e8c8900a7f1f900000000374f258b62986d40f1596532151567e3084ab391177e7676ab046e6e2b7cd594cb49104bffff001ddc4fd604");
+
+        let result = validate_next_work_required(
+            &last_retarget_header,
+            previous_height,
+            &previous_header,
+            &next_header,
+        )
+        .unwrap();
+        assert_ne!(
+            result, last_retarget_header,
+            "Even though the difficulty adjustment didn't occur, retarget to the new header"
+        );
+    }
+
     #[test]
     fn test_get_block_proof_genesis_block() {
         let mut expected_proof =

@@ -168,8 +168,9 @@ extern "C" bool validate_next_work_required(
         return false;
     }
 
-    // If the difficulty has changed, we need to set the next retarget header to the header
-    if (header.nBits != previous_header.nBits)
+    // Only update the next retarget header if we're at a retarget boundary
+    // bitcoin/src/pow.cpp:19
+    if ((previous_height + 1) % params.DifficultyAdjustmentInterval() == 0)
     {
         std::memcpy(next_retarget_header_bytes, header_bytes, HEADER_LENGTH);
     }
