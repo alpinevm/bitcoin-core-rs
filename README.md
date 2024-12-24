@@ -45,6 +45,7 @@ If you want to use this library within an SP1 program for example, you'll need t
 Run the following before then follow the installation instructions for your OS:
 ```
 git clone https://github.com/riscv-collab/riscv-gnu-toolchain && cd riscv-gnu-toolchain
+git checkout 7d8e9ad50d931262cb1403cd97fce674a4086264
 ```
 
 #### Ubuntu 
