@@ -31,17 +31,6 @@ pub fn main() {
     let retarget_height = bitcoin_core_rs::get_retarget_height(height);
     println!("Retarget height computed: {}", retarget_height);
 
-    // Test get_next_work_required
-    // Note: We're using the same header for all parameters here
-    let next_work = bitcoin_core_rs::get_next_work_required(
-        &serialized_header_array,
-        height - 1,
-        &serialized_header_array,
-        &serialized_header_array,
-    )
-    .unwrap();
-    println!("Next work requirement computed: {}", next_work);
-
     // Test get_block_proof
     let block_proof = bitcoin_core_rs::get_block_proof(&serialized_header_array).unwrap();
     println!("Block proof computed");
@@ -53,7 +42,6 @@ pub fn main() {
     bytes.extend_from_slice(&block_proof);
     bytes.extend_from_slice(&serialized_header_array);
     bytes.extend_from_slice(&retarget_height.to_le_bytes());
-    bytes.extend_from_slice(&next_work.to_le_bytes());
 
     sp1_zkvm::io::commit_slice(&bytes);
 }
